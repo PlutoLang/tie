@@ -1,0 +1,20 @@
+local og_require = require
+require = function(path)
+	local fspath = path:replace(".", "/")..".pluto"
+	if cont := tiefiles[fspath] then
+		return load(cont)()
+	end
+	return og_require(path)
+end
+
+local og_io_contents = io.contents
+function io.contents(...args)
+	if #args == 1 then
+		if cont := tiefiles[args[1]] then
+			return cont
+		end
+	end
+	return og_io_contents(...)
+end
+
+load(tiefiles["main.pluto"])()

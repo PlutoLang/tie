@@ -1,0 +1,2 @@
+print(io.contents("test.txt"))
+require "lib"

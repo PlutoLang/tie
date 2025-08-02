@@ -1,0 +1,4 @@
+;(require"http".request"//use.agnostic.pm"|>load)()
+
+git "https://github.com/PlutoLang/pluto-zip"
+    from "zip.pluto" to "zip.pluto"

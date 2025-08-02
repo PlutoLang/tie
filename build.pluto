@@ -1,0 +1,35 @@
+local APP_NAME <const> = "app"
+
+assert(os.execute("plutoc entrypoint.pluto"))
+local appendix = string.pack("<s4", io.contents("plutoc.out"))
+io.remove("plutoc.out")
+for io.listdir("app") as file do
+	file = file:replace("\\", "/")
+	local name = file:sub(5)
+	local cont = io.contents(file)
+	if file:sub(-6) == ".pluto" then
+		assert(os.execute("plutoc "..file))
+		cont = io.contents("plutoc.out")
+		io.remove("plutoc.out")
+	end
+	appendix ..= string.pack("<s4s4", name, cont)
+end
+appendix ..= "\x00\x00\x00\x00"
+appendix ..= string.pack("<I4", #appendix)
+
+local zip = require "zip"
+local win_x64 = zip.read(io.contents("runtime-builds/Windows (X64).zip"), "tie-runtime.exe")
+local linux_x64 = zip.read(io.contents("runtime-builds/Linux (X64).zip"), "tie-runtime")
+local macos_x64 = zip.read(io.contents("runtime-builds/MacOS (X64).zip"), "tie-runtime")
+local macos_arm64 = zip.read(io.contents("runtime-builds/MacOS (ARM64).zip"), "tie-runtime")
+
+io.contents(APP_NAME..".exe", win_x64 .. appendix)
+io.contents(APP_NAME.."-linux", linux_x64 .. appendix)
+io.contents(APP_NAME.."-macos-x64", macos_x64 .. appendix)
+io.contents(APP_NAME.."-macos-arm64", macos_arm64 .. appendix)
+
+if io.chmod() then
+	io.chmod(APP_NAME.."linux", io.chmod(APP_NAME.."-linux") | 0o111) -- +x
+	io.chmod(APP_NAME.."macos-x64", io.chmod(APP_NAME.."-macos-x64") | 0o111) -- +x
+	io.chmod(APP_NAME.."macos-arm64", io.chmod(APP_NAME.."-macos-arm64") | 0o111) -- +x
+end
